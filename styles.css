@@ -16,6 +16,18 @@
 	text-align: center;
 }
 
+#footer {  
+    padding: 10px;  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+}
+
+#github {
+    margin-right: 40px;
+}
+
 #trade-options {
 	margin-top: 30px;
 }
@@ -29,6 +41,7 @@
 }
 
 #main-heading {
+    margin-top: 70px;
     text-align: center;
 }
 

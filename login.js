@@ -18,7 +18,7 @@ document.getElementById("loginForm").addEventListener("submit", (e) => {
                     foundUser = true;
                     userId = user.id;
                     localStorage.setItem("userId", userId)
-                    window.location.replace("http://127.0.0.1:5500/C11Trading/app.html");
+                    window.location.href='app.html';
                 }
             })
 
@@ -39,6 +39,6 @@ function createUser() {
         .then(res => {
             userId = res.data.id;
             localStorage.setItem("userId", userId)
-            window.location.replace("http://127.0.0.1:5500/C11Trading/app.html");
+            window.location.href='app.html';
         }).catch(err => console.log(err));
 }
