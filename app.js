@@ -4,12 +4,15 @@
 const localhostApiEndpoint = "http://localhost:8080/"
 const coinbaseApiEndpoint = "https://api.pro.coinbase.com/products/"
 
-const availableAssets = ["Bitcoin", "Ethereum", "Uniswap"]
+const availableAssets = ["Bitcoin", "Ethereum", "Uniswap", "EOS", "Litecoin", "SushiSwap"]
 
 const assetsTicker = {
     "Bitcoin": "BTC",
     "Ethereum": "ETH",
-    "Uniswap": "UNI"
+    "Uniswap": "UNI",
+    "EOS": "EOS",
+    "Litecoin": "LTC",
+    "SushiSwap": "SUSHI"
 }
 
 let userId = localStorage.getItem("userId");
@@ -33,6 +36,7 @@ function loadDropDownMenu() {
         const dropdownOption = document.createElement("button");
         dropdownOption.className = "dropdown-item";
         dropdownOption.type = "button";
+        dropdownOption.id = asset;
         dropdownOption.innerText = asset;
 
         dropdownOption.addEventListener("click", () => {
@@ -52,34 +56,52 @@ function loadDropDownMenu() {
 
 //Load trade confirmation modal
 function loadModal(assetJson, assetName) {
-    $('#quoteModal').modal('show');
-    const asset = assetName;
-    const price = parseFloat(assetJson.price);
-    let units;
-    let cost;
-    console.log("price " + price);
-    console.log(document.getElementById("quantityBox").value);
-    console.log(document.getElementById("cashBox").value);
 
-    if (document.getElementById("quantityBox").value !== "") {
-        units = parseFloat(document.getElementById("quantityBox").value);
-        cost = price * units;
-    } else {
-        units = parseFloat((document.getElementById("cashBox").value) / price).toFixed(9);
-        cost = parseFloat(document.getElementById("cashBox").value);
-    };
+    axios.get(localhostApiEndpoint + "getPositions")
+        .then(res => {
+            const myPositions = res.data;
+            let alreadyOwned = false;
+            myPositions.forEach(position => {
+                if ((position.name == assetName) && (position.owner == userId)) {
+                    alert(`You already own ${assetName}. Please use the action buttons within the main table to modify your position.`);
+                    alreadyOwned = true;
+                }
+            })
 
-    document.getElementById("modalAssetName").innerHTML = "Asset: " + asset.bold();
-    document.getElementById("modalQuantity").innerHTML = "Units: " + units.toString().bold();
-    document.getElementById("modalPrice").innerHTML = "Price per unit: " + toUSD(price).bold();
-    document.getElementById("modalCost").innerHTML = "Total order cost: " + toUSD(cost).bold();
+            if (alreadyOwned) {
+                return;
+            } else {
+                $('#quoteModal').modal('show');
+                const asset = assetName;
+                const price = parseFloat(assetJson.price);
+                let units;
+                let cost;
+                console.log("price " + price);
+                console.log(document.getElementById("quantityBox").value);
+                console.log(document.getElementById("cashBox").value);
 
-    tradeInfo = {
-        "name": asset,
-        "unitsHeld": units,
-        "cost": cost,
-        "owner": userId
-    }
+                if (document.getElementById("quantityBox").value !== "") {
+                    units = parseFloat(document.getElementById("quantityBox").value);
+                    cost = price * units;
+                } else {
+                    units = parseFloat((document.getElementById("cashBox").value) / price).toFixed(9);
+                    cost = parseFloat(document.getElementById("cashBox").value);
+                };
+
+                document.getElementById("modalAssetName").innerHTML = "Asset: " + asset.bold();
+                document.getElementById("modalQuantity").innerHTML = "Units: " + units.toString().bold();
+                document.getElementById("modalPrice").innerHTML = "Price per unit: " + toUSD(price).bold();
+                document.getElementById("modalCost").innerHTML = "Total order cost: " + toUSD(cost).bold();
+
+                tradeInfo = {
+                    "name": asset,
+                    "unitsHeld": units,
+                    "cost": cost,
+                    "owner": userId
+                }
+            }
+
+        }).catch(err => console.log(err));
 
 }
 
@@ -282,6 +304,8 @@ document.getElementById("obtain-quote").addEventListener("click", () => {
         alert("Please choose an asset.")
     } else if ((document.getElementById("quantityBox").value !== "") && (document.getElementById("cashBox").value !== "")) {
         alert("Cannot input both unit and cash amount. Please use one or the other.")
+    } else if ((document.getElementById("quantityBox").value < 0)) {
+        alert("Cannot purchase zero or negative units.")
     } else {
         axios.get(coinbaseApiEndpoint + `${assetsTicker[assetName]}-usd/ticker`)
             .then(res => {
